@@ -17,7 +17,7 @@ Private channels don't work.
 
 Chat is only one way (Minecraft Server->RocketChat)
 
-# Future Works
+# Future Work
 
 Clean up code and add better exception handling/error messages.
 
