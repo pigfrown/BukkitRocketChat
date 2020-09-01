@@ -1,6 +1,6 @@
 # Default config.yml
 #Server address
-server: yourserveraddress.com
+server: https://yourserveraddress.com
 #Username that will print minecraft chat messages
 username: minecraft-bot
 #Password for username
