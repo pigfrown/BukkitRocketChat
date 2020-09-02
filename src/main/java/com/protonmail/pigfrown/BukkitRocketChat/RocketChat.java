@@ -16,6 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 
 public class RocketChat extends JavaPlugin implements Listener {
@@ -26,6 +28,7 @@ public class RocketChat extends JavaPlugin implements Listener {
 	public static boolean systemMessages;
 	public static boolean deathMessages;
 	public static boolean chatMessages;
+	public static boolean playerJoinQuitMessages;
 	
 	@Override
 	public void onEnable() {
@@ -45,6 +48,7 @@ public class RocketChat extends JavaPlugin implements Listener {
 		systemMessages = config.getBoolean("system_messages");
 		deathMessages = config.getBoolean("death_messages");
 		chatMessages = config.getBoolean("chat_messages");
+		playerJoinQuitMessages = config.getBoolean("player_joinquit_messages");
 		
 		//Get a reference to the room we want to post in
 		
@@ -68,6 +72,7 @@ public class RocketChat extends JavaPlugin implements Listener {
 			systemMessages = false;
 			deathMessages = false;
 			chatMessages = false;
+			playerJoinQuitMessages = false;
 			return;
 		}
 
@@ -89,6 +94,7 @@ public class RocketChat extends JavaPlugin implements Listener {
 			systemMessages = false;
 			deathMessages = false;
 			chatMessages = false;
+			playerJoinQuitMessages = false;
 			return;
 		}
 		
@@ -97,14 +103,38 @@ public class RocketChat extends JavaPlugin implements Listener {
 		
 		if (systemMessages == true) {
 			Message msg = new Message("Minecraft Server has started");
-			try {
-				chat.postMessage(targetRoom, msg);
-			} catch (IOException e) {
-				getLogger().info("IOException when sending system message");
+			sendMessage(msg);
 			}
+	}
+	
+	//Helper method to send a message to the configured RC Channel
+	private void sendMessage(Message msg) {
+		try {
+			chat.postMessage(targetRoom, msg);
+		} catch (IOException e) {
+			getLogger().info("IOException when trying to post message : "+ msg.toString());
 		}
 	}
 	
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		if (playerJoinQuitMessages != true) {
+			return;
+		}
+		
+		Message msg = new Message(event.getJoinMessage());
+		sendMessage(msg);
+	}
+	
+	@EventHandler
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		if (playerJoinQuitMessages != true) {
+			return;
+		}
+		
+		Message msg = new Message(event.getQuitMessage());
+		sendMessage(msg);
+	}
 	
 	@EventHandler
 	public void onChatMessage(AsyncPlayerChatEvent event) {
@@ -114,11 +144,7 @@ public class RocketChat extends JavaPlugin implements Listener {
 		
 		String playerName = event.getPlayer().getDisplayName();
 		Message msg = new Message(playerName + ": " + event.getMessage());
-		try {
-			chat.postMessage(targetRoom, msg);
-		} catch (IOException e) {
-			getLogger().info("IOException when trying to post chat message");
-		}
+		sendMessage(msg);
 	}
 	
 	@EventHandler
@@ -127,27 +153,18 @@ public class RocketChat extends JavaPlugin implements Listener {
 			return;
 		}
 		
-		String deathMsg = event.getDeathMessage();
-		Message msg = new Message(deathMsg);
-		try {
-			chat.postMessage(targetRoom, msg);
-		} catch (IOException e) {
-			getLogger().info("IOException when trying to post death message");
-		}
-		
-		
+		Message msg = new Message(event.getDeathMessage());
+		sendMessage(msg);		
 	}
 	
 	@Override
 	public void onDisable() {
-		if (systemMessages == true) {
-			Message msg = new Message("Minecraft Server has stopped");
-			try {
-				chat.postMessage(targetRoom, msg);
-			} catch (IOException e) {
-				getLogger().info("IOException when sending system message");
-			}
+		if (systemMessages != true) {
+			return;
 		}
+		Message msg = new Message("Minecraft Server has stopped");
+		sendMessage(msg);
+	
 	}
 	
 

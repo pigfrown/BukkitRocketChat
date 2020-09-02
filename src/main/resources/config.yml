@@ -19,3 +19,6 @@ death_messages: true
 
 #Print chat messages
 chat_messages: true
+
+#Print player join/quit messages
+player_joinquit_messages = true;
