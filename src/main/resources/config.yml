@@ -1,9 +1,21 @@
 # Default config.yml
 #Server address
 server: https://yourserveraddress.com
+
 #Username that will print minecraft chat messages
 username: minecraft-bot
+
 #Password for username
 password: hunter2
+
 #channel to post chat message to
 channel: minecraft
+
+#Print system messages 
+system_messages: true
+
+#Print death messages
+death_messages: true
+
+#Print chat messages
+chat_messages: true

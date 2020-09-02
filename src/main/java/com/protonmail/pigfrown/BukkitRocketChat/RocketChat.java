@@ -14,6 +14,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.EventHandler;
 
 
@@ -22,9 +23,15 @@ public class RocketChat extends JavaPlugin implements Listener {
 	public static RocketChatClient client;
 	public static RocketChatRestApiV1Chat chat;
 	
+	public static boolean systemMessages;
+	public static boolean deathMessages;
+	public static boolean chatMessages;
+	
 	@Override
 	public void onEnable() {
 		this.saveDefaultConfig();
+		
+		//register this class as event handler
 		getServer().getPluginManager().registerEvents(this, this);
 		
 		//Get username/password and server address from config file
@@ -33,6 +40,11 @@ public class RocketChat extends JavaPlugin implements Listener {
 		String username = config.getString("username");
 		String password = config.getString("password");
 		String channelName = config.getString("channel");
+		
+		
+		systemMessages = config.getBoolean("system_messages");
+		deathMessages = config.getBoolean("death_messages");
+		chatMessages = config.getBoolean("chat_messages");
 		
 		//Get a reference to the room we want to post in
 		
@@ -51,7 +63,11 @@ public class RocketChat extends JavaPlugin implements Listener {
 			allChannels = channels.list();
 		}
 		catch (IOException e) {
-			getLogger().info("Error when requesting channel list, username/password probably incorrect");
+			//Turn off all messaging if we aren't init properly
+			getLogger().info("Error when requesting channel list, server or username/password probably incorrect");
+			systemMessages = false;
+			deathMessages = false;
+			chatMessages = false;
 			return;
 		}
 
@@ -68,42 +84,70 @@ public class RocketChat extends JavaPlugin implements Listener {
 		}
 		
 		if (channelExists != true) {
+			//Turn off all messaging if we can't init properly
 			getLogger().info("Could not find the requested channel " + channelName + "on server " + server);
+			systemMessages = false;
+			deathMessages = false;
+			chatMessages = false;
 			return;
 		}
-		else {
-			
-		}
+		
 		//Get the reference to the room
 		targetRoom = new Room(targetChannel.getRoomId(), false);	
 		
-		getLogger().info("About to send a message");
-		Message msg = new Message("Minecraft Server has restarted");
-		try {
-			chat.postMessage(targetRoom, msg);
-		} catch (IOException e) {
-			getLogger().info("IOException when sending message");
+		if (systemMessages == true) {
+			Message msg = new Message("Minecraft Server has started");
+			try {
+				chat.postMessage(targetRoom, msg);
+			} catch (IOException e) {
+				getLogger().info("IOException when sending system message");
+			}
 		}
 	}
 	
 	
 	@EventHandler
 	public void onChatMessage(AsyncPlayerChatEvent event) {
+		if (chatMessages != true) {
+			return;
+		}
 		
-		//TODO check everything is init'd properly or return
-		getLogger().info("In PlayerChatEvent at least");
 		String playerName = event.getPlayer().getDisplayName();
 		Message msg = new Message(playerName + ": " + event.getMessage());
 		try {
 			chat.postMessage(targetRoom, msg);
 		} catch (IOException e) {
-			getLogger().info("IOException when trying to post message");
+			getLogger().info("IOException when trying to post chat message");
 		}
+	}
+	
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent event) {
+		if (deathMessages != true) {
+			return;
+		}
+		
+		String deathMsg = event.getDeathMessage();
+		Message msg = new Message(deathMsg);
+		try {
+			chat.postMessage(targetRoom, msg);
+		} catch (IOException e) {
+			getLogger().info("IOException when trying to post death message");
+		}
+		
+		
 	}
 	
 	@Override
 	public void onDisable() {
-		//TODO do we even need to do anything here?
+		if (systemMessages == true) {
+			Message msg = new Message("Minecraft Server has stopped");
+			try {
+				chat.postMessage(targetRoom, msg);
+			} catch (IOException e) {
+				getLogger().info("IOException when sending system message");
+			}
+		}
 	}
 	
 
