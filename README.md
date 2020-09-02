@@ -25,6 +25,5 @@ Fix private channels.
 
 2 way chat with permissions.
 
-Death messages/other server messages.
 
 
